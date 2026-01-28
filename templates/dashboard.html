@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Prediction Form -->
+    <div class="card prediction-card">
+        <h2>New Assessment</h2>
+        <form method="POST" action="/dashboard">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="age">Age (years)</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required placeholder="e.g. 45">
+                </div>
+                <div class="form-group">
+                    <label for="bmi">BMI</label>
+                    <input type="number" id="bmi" name="bmi" step="0.1" min="10" max="60" required placeholder="e.g. 24.5">
+                    <small>Body Mass Index</small>
+                </div>
+                <div class="form-group">
+                    <label for="glucose">Glucose (mg/dL)</label>
+                    <input type="number" id="glucose" name="glucose" min="50" max="300" required placeholder="e.g. 100">
+                </div>
+                <div class="form-group">
+                    <label for="bp">Blood Pressure (mm Hg)</label>
+                    <input type="number" id="bp" name="bp" min="60" max="200" required placeholder="e.g. 120">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Analyze Risk</button>
+        </form>
+
+        {% if prediction %}
+            <div class="result-box {{ 'result-high' if prediction == 'High Risk' else 'result-low' }}">
+                <h3>Result: {{ prediction }}</h3>
+                <p>
+                    {% if prediction == 'High Risk' %}
+                        Please consult a healthcare professional.
+                    {% else %}
+                        Your metrics look healthy. Keep it up!
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- History -->
+    <div class="card history-card">
+        <h2>History</h2>
+        {% if history %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Result</th>
+                            <th>Metrics</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                        <tr>
+                            <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <span class="badge {{ 'badge-danger' if item.result == 'High Risk' else 'badge-success' }}">
+                                    {{ item.result }}
+                                </span>
+                            </td>
+                            <td class="small-text">
+                                Age: {{ item.age }} | BMI: {{ item.bmi }}<br>
+                                Glu: {{ item.glucose }} | BP: {{ item.bp }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-state">No assessments yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
