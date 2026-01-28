@@ -7,14 +7,15 @@ import pandas as pd
 import numpy as np
 import os
 from datetime import datetime
+import json
+import requests
 
 # Initialize App
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.environ.get('SESSION_SECRET', 'dev_secret_key')
 
-# Database Config - Using SQLite for compatibility but structured for MySQL
-# To use MySQL, change to: 'mysql+mysqlconnector://user:password@host/db'
+# Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bio.db' 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -46,6 +47,56 @@ def load_model():
         model = joblib.load('model.pkl')
     except:
         print("Model not found. Please run train_model.py first.")
+
+# --- OpenAI Helper ---
+def get_ai_advice(prediction_data, user_query=None):
+    """
+    Get AI-powered health suggestions and diet plans based on prediction data.
+    Uses Replit AI Integrations for OpenAI access.
+    """
+    api_key = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY")
+    if not api_key:
+        return "AI Advisor is temporarily unavailable. Please check back later."
+
+    system_prompt = (
+        "You are a professional health and diet advisor. "
+        "Based on the user's health metrics (Age, BMI, Glucose, Blood Pressure) and their risk prediction, "
+        "provide clear, actionable health suggestions and a personalized diet plan. "
+        "Maintain a supportive, professional tone. If they ask a question, answer it concisely."
+    )
+    
+    user_context = (
+        f"Metrics: Age {prediction_data['age']}, BMI {prediction_data['bmi']}, "
+        f"Glucose {prediction_data['glucose']} mg/dL, Blood Pressure {prediction_data['bp']} mm Hg. "
+        f"Risk Level: {prediction_data['result']}."
+    )
+    
+    if user_query:
+        user_message = f"{user_context}\nUser Question: {user_query}"
+    else:
+        user_message = f"Please provide a health improvement plan and diet suggestions based on these metrics: {user_context}"
+
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ]
+            },
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"AI Error: {e}")
+        return "I couldn't generate a plan at the moment. Please consult a doctor for personalized advice."
 
 # --- Routes ---
 
@@ -103,6 +154,7 @@ def dashboard():
         return redirect(url_for('login'))
         
     prediction = None
+    ai_advice = None
     if request.method == 'POST':
         try:
             age = float(request.form['age'])
@@ -125,6 +177,9 @@ def dashboard():
                 )
                 db.session.add(new_pred)
                 db.session.commit()
+                
+                # Get initial AI advice
+                ai_advice = get_ai_advice({'age': age, 'bmi': bmi, 'glucose': glucose, 'bp': bp, 'result': prediction})
             else:
                 prediction = "Error: Model not loaded"
                 
@@ -137,7 +192,30 @@ def dashboard():
     return render_template('dashboard.html', 
                          username=session['username'], 
                          prediction=prediction,
+                         ai_advice=ai_advice,
                          history=history)
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    last_pred = Prediction.query.filter_by(user_id=session['user_id']).order_by(Prediction.created_at.desc()).first()
+    
+    if not last_pred:
+        return jsonify({"response": "Please complete a health assessment first so I can give you personalized advice."})
+    
+    metrics = {
+        'age': last_pred.age,
+        'bmi': last_pred.bmi,
+        'glucose': last_pred.glucose,
+        'bp': last_pred.bp,
+        'result': last_pred.result
+    }
+    
+    response = get_ai_advice(metrics, data.get('query'))
+    return jsonify({"response": response})
 
 # --- Init ---
 if __name__ == '__main__':
