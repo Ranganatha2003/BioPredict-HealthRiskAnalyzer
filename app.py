@@ -55,6 +55,7 @@ def get_ai_advice(prediction_data, user_query=None):
     Uses Replit AI Integrations for OpenAI access.
     """
     api_key = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY")
+    base_url = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
     if not api_key:
         return "AI Advisor is temporarily unavailable. Please check back later."
 
@@ -78,7 +79,7 @@ def get_ai_advice(prediction_data, user_query=None):
 
     try:
         response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
+            f"{base_url}/chat/completions" if base_url else "https://api.openai.com/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
