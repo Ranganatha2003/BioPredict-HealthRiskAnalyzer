@@ -13,6 +13,9 @@ dependencies = [
     "mysql-connector-python>=9.6.0",
     "numpy>=2.4.1",
     "pandas>=3.0.0",
+    "pdfplumber>=0.11.9",
+    "pillow>=12.1.0",
+    "pytesseract>=0.3.13",
     "requests>=2.32.5",
     "scikit-learn>=1.8.0",
 ]

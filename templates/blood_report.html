@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="card">
+        <h2>Blood Report Analysis</h2>
+        <p class="tertiary-text">Upload your lab report (PDF, Image, or CSV) for a quick parameter analysis.</p>
+        
+        <form method="POST" action="/blood-report" enctype="multipart/form-data" class="upload-form">
+            <div class="form-group">
+                <label for="report">Select File</label>
+                <input type="file" id="report" name="report" accept=".pdf,.csv,.png,.jpg,.jpeg" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload & Analyze</button>
+        </form>
+
+        <div class="alert info-alert" style="margin-top: 1.5rem;">
+            <strong>Notice:</strong> This is a health risk analysis system and not a medical diagnosis. Always consult a healthcare professional.
+        </div>
+
+        {% if analysis %}
+        <div class="analysis-results" style="margin-top: 2rem;">
+            <h3>Latest Analysis Results</h3>
+            
+            {% if analysis.abnormal %}
+            <div class="risk-section">
+                <h4 class="text-danger">Abnormal Values Detected</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Your Value</th>
+                                <th>Ref Range</th>
+                                <th>Indicator</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in analysis.abnormal %}
+                            <tr class="row-danger">
+                                <td>{{ item.parameter }}</td>
+                                <td><strong>{{ item.value }}</strong></td>
+                                <td>{{ item.range }}</td>
+                                <td>{{ item.risk }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-success">All extracted parameters are within standard reference ranges.</p>
+            {% endif %}
+
+            <div class="full-data" style="margin-top: 1.5rem;">
+                <h4>All Extracted Data</h4>
+                <div class="grid-stats">
+                    {% for param, data in analysis.data.items() %}
+                    <div class="stat-pill {{ 'pill-danger' if data.status == 'Abnormal' else 'pill-success' }}">
+                        <span>{{ param }}</span>
+                        <strong>{{ data.value }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="side-column">
+        <div class="card">
+            <h2>Recent Reports</h2>
+            {% if reports %}
+                <div class="report-list">
+                    {% for report in reports %}
+                    <div class="report-item">
+                        <div class="report-meta">
+                            <strong>{{ report.filename }}</strong>
+                            <span class="tertiary-text">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">No reports uploaded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-form {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+}
+.analysis-results h3 { border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
+.row-danger { background-color: #fef2f2; }
+.text-danger { color: #dc2626; }
+.text-success { color: #16a34a; }
+.grid-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 1rem; }
+.stat-pill { padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+.pill-danger { border-color: #fca5a5; background: #fff1f1; }
+.pill-success { border-color: #86efac; background: #f0fdf4; }
+.stat-pill span { font-size: 0.8rem; color: #64748b; }
+.report-item { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+.report-meta { display: flex; flex-direction: column; }
+</style>
+{% endblock %}
