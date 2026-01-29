@@ -34,6 +34,10 @@ class User(db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def __init__(self, username, password_hash):
+        self.username = username
+        self.password_hash = password_hash
+
 class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -44,12 +48,25 @@ class Prediction(db.Model):
     result = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def __init__(self, user_id, age, bmi, glucose, bp, result):
+        self.user_id = user_id
+        self.age = age
+        self.bmi = bmi
+        self.glucose = glucose
+        self.bp = bp
+        self.result = result
+
 class BloodReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     filename = db.Column(db.String(200), nullable=False)
     analysis_json = db.Column(db.Text, nullable=False) # Stores extracted values and risks
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, user_id, filename, analysis_json):
+        self.user_id = user_id
+        self.filename = filename
+        self.analysis_json = analysis_json
 
 # --- Reference Ranges ---
 BLOOD_REFERENCE_RANGES = {
@@ -220,7 +237,7 @@ def blood_report():
     analysis = None
     if request.method == 'POST':
         file = request.files.get('report')
-        if file:
+        if file and file.filename:
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)

@@ -13,8 +13,9 @@
             <a href="/" class="logo">BioPredict</a>
             <div class="nav-links">
                 {% if session.get('user_id') %}
-                    <span>Welcome, {{ session.get('username') }}</span>
-                    <a href="/logout" class="btn btn-outline">Logout</a>
+                    <a href="/dashboard">Prediction</a>
+                    <a href="/blood-report">Blood Report</a>
+                    <a href="/logout" class="btn btn-outline btn-sm">Logout</a>
                 {% else %}
                     <a href="/login">Login</a>
                     <a href="/register" class="btn btn-primary">Sign Up</a>
