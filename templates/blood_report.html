@@ -20,49 +20,47 @@
 
         {% if analysis %}
         <div class="analysis-results" style="margin-top: 2rem;">
-            <h3>Latest Analysis Results</h3>
+            <h3>Blood Analysis Report</h3>
             
-            {% if analysis.abnormal %}
-            <div class="risk-section">
-                <h4 class="text-danger">Abnormal Values Detected</h4>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Parameter</th>
-                                <th>Your Value</th>
-                                <th>Ref Range</th>
-                                <th>Indicator</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in analysis.abnormal %}
-                            <tr class="row-danger">
-                                <td>{{ item.parameter }}</td>
-                                <td><strong>{{ item.value }}</strong></td>
-                                <td>{{ item.range }}</td>
-                                <td>{{ item.risk }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% else %}
-            <p class="text-success">All extracted parameters are within standard reference ranges.</p>
-            {% endif %}
-
-            <div class="full-data" style="margin-top: 1.5rem;">
-                <h4>All Extracted Data</h4>
-                <div class="grid-stats">
-                    {% for param, data in analysis.data.items() %}
-                    <div class="stat-pill {{ 'pill-danger' if data.status == 'Abnormal' else 'pill-success' }}">
-                        <span>{{ param }}</span>
-                        <strong>{{ data.value }}</strong>
+            <div class="results-grid">
+                {% for item in analysis.data %}
+                <div class="result-card status-{{ item.status | lower }}">
+                    <div class="result-header">
+                        <h4>{{ item.parameter }}</h4>
+                        <span class="badge badge-{{ 'success' if item.status == 'Normal' else 'danger' if item.status in ['High', 'Low'] else 'warning' }}">
+                            {{ item.status }}
+                        </span>
                     </div>
-                    {% endfor %}
+                    <div class="result-body">
+                        <div class="metric-row">
+                            <span class="label">Result:</span>
+                            <span class="value">{{ item.value }} {{ item.unit }}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="label">Ref Range:</span>
+                            <span class="value">{{ item.range }} {{ item.unit }}</span>
+                        </div>
+                        
+                        {% if item.status != 'Normal' %}
+                        <div class="risk-info">
+                            <strong>Possible Indicator:</strong>
+                            <p>{{ item.risk }}</p>
+                        </div>
+                        <div class="suggestion-info">
+                            <strong>Suggestion:</strong>
+                            <p>{{ item.suggestion }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
+                {% endfor %}
             </div>
+
+            {% if not analysis.data %}
+            <div class="alert warning-alert">
+                No standard blood parameters were detected in this report. Please ensure the file contains clear text for parameters like Hemoglobin, Glucose, etc.
+            </div>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -89,6 +87,56 @@
 </div>
 
 <style>
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+.result-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.status-high, .status-low { border-left: 6px solid #ef4444; }
+.status-normal { border-left: 6px solid #10b981; }
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 0.5rem;
+}
+.result-header h4 { margin: 0; color: #1e293b; }
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+.metric-row .label { color: #64748b; }
+.metric-row .value { font-weight: 600; color: #1e293b; }
+
+.risk-info, .suggestion-info {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+}
+.risk-info strong, .suggestion-info strong {
+    display: block;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 0.25rem;
+}
+.risk-info p { color: #dc2626; margin: 0; font-size: 0.9rem; }
+.suggestion-info p { color: #334155; margin: 0; font-size: 0.9rem; line-height: 1.4; }
+
 .upload-form {
     background: #f8fafc;
     padding: 1.5rem;

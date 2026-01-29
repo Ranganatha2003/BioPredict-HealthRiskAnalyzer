@@ -68,18 +68,6 @@ class BloodReport(db.Model):
         self.filename = filename
         self.analysis_json = analysis_json
 
-# --- Reference Ranges ---
-BLOOD_REFERENCE_RANGES = {
-    'Hemoglobin': {'min': 13.5, 'max': 17.5, 'unit': 'g/dL', 'risk': 'Anemia Risk (if low)'},
-    'RBC': {'min': 4.5, 'max': 5.9, 'unit': 'million/mcL', 'risk': 'Blood density concerns'},
-    'WBC': {'min': 4500, 'max': 11000, 'unit': 'cells/mcL', 'risk': 'Infection Risk (if high)'},
-    'Platelet count': {'min': 150000, 'max': 450000, 'unit': 'mcL', 'risk': 'Clotting concerns'},
-    'Fasting Glucose': {'min': 70, 'max': 100, 'unit': 'mg/dL', 'risk': 'Diabetes Risk (if high)'},
-    'Total Cholesterol': {'min': 0, 'max': 200, 'unit': 'mg/dL', 'risk': 'Heart Disease Risk (if high)'},
-    'Triglycerides': {'min': 0, 'max': 150, 'unit': 'mg/dL', 'risk': 'Metabolic Risk (if high)'},
-    'Creatinine': {'min': 0.7, 'max': 1.3, 'unit': 'mg/dL', 'risk': 'Kidney Function Risk'}
-}
-
 # --- ML Model ---
 model = None
 
@@ -90,31 +78,115 @@ def load_model():
     except:
         print("Model not found. Please run train_model.py first.")
 
+# --- Reference Ranges and Risk Mapping ---
+BLOOD_PARAMETERS = {
+    'Hemoglobin': {
+        'min': 13.5, 'max': 17.5, 'unit': 'g/dL',
+        'risks': {'low': 'Anemia Risk', 'high': 'Polycythemia Risk'},
+        'suggestions': {
+            'low': 'Increase iron-rich foods like spinach, lentils, and red meat. Consult for iron supplements.',
+            'high': 'Stay well-hydrated. Consult a doctor to rule out underlying conditions.'
+        }
+    },
+    'RBC': {
+        'min': 4.5, 'max': 5.9, 'unit': 'million/mcL',
+        'risks': {'low': 'Possible Anemia or nutritional deficiency', 'high': 'Possible dehydration or bone marrow disorder'},
+        'suggestions': {
+            'low': 'Ensure adequate intake of Vitamin B12 and Folic acid.',
+            'high': 'Increase water intake and avoid tobacco products.'
+        }
+    },
+    'WBC': {
+        'min': 4500, 'max': 11000, 'unit': 'cells/mcL',
+        'risks': {'low': 'Weakened immune system', 'high': 'Infection or inflammation risk'},
+        'suggestions': {
+            'low': 'Focus on immune-boosting foods and maintain good hygiene.',
+            'high': 'Rest and monitor for fever. Consult if symptoms persist.'
+        }
+    },
+    'Platelet count': {
+        'min': 150000, 'max': 450000, 'unit': 'mcL',
+        'risks': {'low': 'Risk of bleeding/easy bruising', 'high': 'Risk of blood clots'},
+        'suggestions': {
+            'low': 'Avoid activities with high injury risk. Avoid blood-thinning meds like aspirin unless prescribed.',
+            'high': 'Maintain an active lifestyle and stay hydrated to improve circulation.'
+        }
+    },
+    'Fasting Glucose': {
+        'min': 70, 'max': 100, 'unit': 'mg/dL',
+        'risks': {'low': 'Hypoglycemia risk', 'high': 'Diabetes/Prediabetes risk'},
+        'suggestions': {
+            'low': 'Carry a source of fast-acting sugar. Eat regular, balanced meals.',
+            'high': 'Reduce sugar and refined carb intake. Increase physical activity.'
+        }
+    },
+    'Total Cholesterol': {
+        'min': 0, 'max': 200, 'unit': 'mg/dL',
+        'risks': {'low': 'Usually not a concern', 'high': 'Heart Disease Risk'},
+        'suggestions': {
+            'low': 'Maintain a balanced diet with healthy fats.',
+            'high': 'Limit saturated fats. Increase fiber intake from vegetables and oats.'
+        }
+    },
+    'Triglycerides': {
+        'min': 0, 'max': 150, 'unit': 'mg/dL',
+        'risks': {'low': 'Usually not a concern', 'high': 'Metabolic Risk/Heart health'},
+        'suggestions': {
+            'low': 'Ensure adequate calorie and healthy fat intake.',
+            'high': 'Limit alcohol and sugar. Engage in regular aerobic exercise.'
+        }
+    },
+    'Creatinine': {
+        'min': 0.7, 'max': 1.3, 'unit': 'mg/dL',
+        'risks': {'low': 'Low muscle mass/malnutrition', 'high': 'Kidney Function Risk'},
+        'suggestions': {
+            'low': 'Ensure adequate protein intake and muscle-strengthening exercise.',
+            'high': 'Limit high-protein intake and stay well-hydrated. Discuss kidney health with a doctor.'
+        }
+    }
+}
+
 # --- Analysis Logic ---
 def analyze_blood_text(text):
-    results = {}
-    abnormal = []
+    results = []
+    has_abnormal = False
     
-    # Simple rule-based extraction
-    for param in BLOOD_REFERENCE_RANGES.keys():
-        import re
-        pattern = fr"{param}\s*[:\-]?\s*(\d+\.?\d*)"
+    import re
+    # Rule-based extraction for all defined parameters
+    for param, ref in BLOOD_PARAMETERS.items():
+        # Match variations in names and handle values
+        escaped_param = re.escape(param).replace('\\ ', '\\s*')
+        pattern = fr"{escaped_param}\s*[:\-]?\s*(\d+\.?\d*)"
         match = re.search(pattern, text, re.IGNORECASE)
+        
         if match:
             val = float(match.group(1))
-            ref = BLOOD_REFERENCE_RANGES[param]
             status = "Normal"
-            if val < ref['min'] or val > ref['max']:
-                status = "Abnormal"
-                abnormal.append({
-                    'parameter': param,
-                    'value': val,
-                    'range': f"{ref['min']} - {ref['max']}",
-                    'risk': ref['risk']
-                })
-            results[param] = {'value': val, 'status': status}
+            risk = "N/A"
+            suggestion = "Keep up your healthy lifestyle."
+            
+            if val < ref['min']:
+                status = "Low"
+                risk = ref['risks'].get('low', 'Value below range')
+                suggestion = ref['suggestions'].get('low', 'Consult a doctor.')
+                has_abnormal = True
+            elif val > ref['max']:
+                status = "High"
+                risk = ref['risks'].get('high', 'Value above range')
+                suggestion = ref['suggestions'].get('high', 'Consult a doctor.')
+                has_abnormal = True
+            
+            results.append({
+                'parameter': param,
+                'value': val,
+                'unit': ref['unit'],
+                'range': f"{ref['min']} - {ref['max']}",
+                'status': status,
+                'risk': risk,
+                'suggestion': suggestion
+            })
     
-    return {'data': results, 'abnormal': abnormal}
+    return {'data': results, 'has_abnormal': has_abnormal}
 
 # --- OpenAI Helper ---
 def get_ai_advice(prediction_data, user_query=None):

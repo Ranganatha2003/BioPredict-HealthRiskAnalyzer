@@ -1,0 +1,65 @@
+Fix the Blood Report Analysis feature in the existing BioPredict Flask application.
+
+Current Issue:
+- Only one parameter (platelet count) is being extracted and displayed.
+- The system incorrectly shows “All extracted parameters are within standard reference ranges”.
+- No proper risk classification or health suggestions are shown.
+
+Required Fixes:
+
+1. Parameter Extraction:
+   - Define a fixed list of expected blood parameters:
+     Hemoglobin, RBC, WBC, Platelet count, Fasting Glucose,
+     Total Cholesterol, Triglycerides, Creatinine.
+   - Implement loop-based extraction so ALL parameters present in the report
+     are detected and parsed, not just one.
+   - Support CSV files first (PDF/Image handling can be optional or future scope).
+
+2. Reference Range Validation:
+   - Define standard reference ranges for each parameter.
+   - Compare extracted values against these ranges.
+   - Classify each parameter as LOW, NORMAL, or HIGH.
+
+3. Risk Mapping:
+   - Map abnormal values to possible health risks
+     (e.g., low hemoglobin → anemia risk,
+            high glucose → diabetes risk,
+            high cholesterol → heart disease risk).
+   - Use risk wording such as “may indicate” or “possible risk”,
+     not medical diagnosis.
+
+4. Health Suggestions:
+   - Add rule-based lifestyle and dietary suggestions for each detected risk.
+   - Suggestions must be general and safe (no medical prescriptions).
+
+5. Output Structure:
+   - Return a structured JSON response containing:
+     - Parameter name
+     - Extracted value
+     - Status (Low / Normal / High)
+     - Possible risk
+     - Health suggestion
+
+6. UI Improvements:
+   - Display each parameter in a separate card or table row.
+   - Use color coding:
+       Green = Normal,
+       Yellow = Borderline,
+       Red = High/Low risk.
+   - Remove the global “All parameters are normal” message
+     unless ALL extracted parameters truly fall within range.
+
+7. Data Persistence:
+   - Store extracted parameters and analysis results
+     in the database linked to the logged-in user.
+
+Constraints:
+- Use Python Flask only.
+- Do NOT use Node.js or React.
+- Keep the analysis rule-based (no ML model required).
+- Preserve existing diabetes prediction functionality.
+
+Goal:
+After the fix, uploading a valid blood report should show
+multiple parameters with clear risk analysis and health suggestions,
+not just platelet count.
