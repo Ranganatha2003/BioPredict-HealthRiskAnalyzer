@@ -160,21 +160,31 @@ def analyze_blood_text(text):
     has_abnormal = False
     
     import re
+    # Clean text for better matching (remove multiple spaces/newlines)
+    clean_text = re.sub(r'\s+', ' ', text)
+    
     # Rule-based extraction for all defined parameters
     for param, ref in BLOOD_PARAMETERS.items():
         # Try primary name and all aliases
         found_val = None
         for alias in ref.get('aliases', [param]):
-            # Improved regex to handle various report formats
+            # More flexible regex pattern:
+            # 1. Alias (case-insensitive)
+            # 2. Optional non-alphanumeric separators (spaces, colons, dashes, etc.)
+            # 3. Numeric value (handles decimals with . or ,)
+            # 4. Optional unit (ignored for extraction)
             escaped_alias = re.escape(alias).replace('\\ ', '\\s*')
-            pattern = fr"{escaped_alias}\s*[:\-=\s]\s*(\d+[\.,]?\d*)"
-            match = re.search(pattern, text, re.IGNORECASE)
+            pattern = fr"{escaped_alias}\s*[^0-9\n]*?\s*(\d+[\.,]?\d*)"
+            
+            # Find all matches and take the most likely one (often the first or one with units nearby)
+            # In clinical reports, the first occurrence is usually the result
+            match = re.search(pattern, clean_text, re.IGNORECASE)
             
             if match:
                 val_str = match.group(1).replace(',', '.')
                 try:
                     found_val = float(val_str)
-                    break 
+                    break # Stop if we found a valid number for this parameter
                 except ValueError:
                     continue
         
