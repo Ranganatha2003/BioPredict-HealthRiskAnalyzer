@@ -165,8 +165,8 @@ def analyze_blood_text(text):
         # Try primary name and all aliases
         found_val = None
         for alias in ref.get('aliases', [param]):
+            # Improved regex to handle various report formats
             escaped_alias = re.escape(alias).replace('\\ ', '\\s*')
-            # Look for alias followed by non-digits (like colon or spaces) and then a numeric value
             pattern = fr"{escaped_alias}\s*[:\-=\s]\s*(\d+[\.,]?\d*)"
             match = re.search(pattern, text, re.IGNORECASE)
             
