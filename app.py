@@ -81,6 +81,7 @@ def load_model():
 # --- Reference Ranges and Risk Mapping ---
 BLOOD_PARAMETERS = {
     'Hemoglobin': {
+        'aliases': ['Hb', 'Hemoglobin', 'Hgb'],
         'min': 13.5, 'max': 17.5, 'unit': 'g/dL',
         'risks': {'low': 'Anemia Risk', 'high': 'Polycythemia Risk'},
         'suggestions': {
@@ -89,6 +90,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'RBC': {
+        'aliases': ['RBC', 'Red Blood Cell', 'Erythrocytes'],
         'min': 4.5, 'max': 5.9, 'unit': 'million/mcL',
         'risks': {'low': 'Possible Anemia or nutritional deficiency', 'high': 'Possible dehydration or bone marrow disorder'},
         'suggestions': {
@@ -97,6 +99,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'WBC': {
+        'aliases': ['WBC', 'White Blood Cell', 'Leukocytes'],
         'min': 4500, 'max': 11000, 'unit': 'cells/mcL',
         'risks': {'low': 'Weakened immune system', 'high': 'Infection or inflammation risk'},
         'suggestions': {
@@ -105,6 +108,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'Platelet count': {
+        'aliases': ['Platelets', 'Platelet count', 'PLT'],
         'min': 150000, 'max': 450000, 'unit': 'mcL',
         'risks': {'low': 'Risk of bleeding/easy bruising', 'high': 'Risk of blood clots'},
         'suggestions': {
@@ -113,6 +117,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'Fasting Glucose': {
+        'aliases': ['Fasting Glucose', 'Blood Sugar', 'Glucose', 'FBS'],
         'min': 70, 'max': 100, 'unit': 'mg/dL',
         'risks': {'low': 'Hypoglycemia risk', 'high': 'Diabetes/Prediabetes risk'},
         'suggestions': {
@@ -121,6 +126,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'Total Cholesterol': {
+        'aliases': ['Cholesterol', 'Total Cholesterol', 'TC'],
         'min': 0, 'max': 200, 'unit': 'mg/dL',
         'risks': {'low': 'Usually not a concern', 'high': 'Heart Disease Risk'},
         'suggestions': {
@@ -129,6 +135,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'Triglycerides': {
+        'aliases': ['Triglycerides', 'TG', 'TRIG'],
         'min': 0, 'max': 150, 'unit': 'mg/dL',
         'risks': {'low': 'Usually not a concern', 'high': 'Metabolic Risk/Heart health'},
         'suggestions': {
@@ -137,6 +144,7 @@ BLOOD_PARAMETERS = {
         }
     },
     'Creatinine': {
+        'aliases': ['Creatinine', 'CRE', 'CREA'],
         'min': 0.7, 'max': 1.3, 'unit': 'mg/dL',
         'risks': {'low': 'Low muscle mass/malnutrition', 'high': 'Kidney Function Risk'},
         'suggestions': {
@@ -154,13 +162,24 @@ def analyze_blood_text(text):
     import re
     # Rule-based extraction for all defined parameters
     for param, ref in BLOOD_PARAMETERS.items():
-        # Match variations in names and handle values
-        escaped_param = re.escape(param).replace('\\ ', '\\s*')
-        pattern = fr"{escaped_param}\s*[:\-]?\s*(\d+\.?\d*)"
-        match = re.search(pattern, text, re.IGNORECASE)
+        # Try primary name and all aliases
+        found_val = None
+        for alias in ref.get('aliases', [param]):
+            escaped_alias = re.escape(alias).replace('\\ ', '\\s*')
+            # Look for alias followed by non-digits (like colon or spaces) and then a numeric value
+            pattern = fr"{escaped_alias}\s*[:\-=\s]\s*(\d+[\.,]?\d*)"
+            match = re.search(pattern, text, re.IGNORECASE)
+            
+            if match:
+                val_str = match.group(1).replace(',', '.')
+                try:
+                    found_val = float(val_str)
+                    break 
+                except ValueError:
+                    continue
         
-        if match:
-            val = float(match.group(1))
+        if found_val is not None:
+            val = found_val
             status = "Normal"
             risk = "N/A"
             suggestion = "Keep up your healthy lifestyle."
