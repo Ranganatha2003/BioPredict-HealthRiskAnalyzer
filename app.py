@@ -81,75 +81,138 @@ def load_model():
 # --- Reference Ranges and Risk Mapping ---
 BLOOD_PARAMETERS = {
     'Hemoglobin': {
-        'aliases': ['Hb', 'Hemoglobin', 'Hgb'],
-        'min': 13.5, 'max': 17.5, 'unit': 'g/dL',
-        'risks': {'low': 'Anemia Risk', 'high': 'Polycythemia Risk'},
+        'aliases': ['Hb', 'Hemoglobin', 'Hgb', 'Haemoglobin'],
+        'min': 13.0, 'max': 17.0, 'unit': 'g/dL',
+        'risks': {'low': 'May indicate Anemia', 'high': 'May indicate Polycythemia'},
         'suggestions': {
-            'low': 'Increase iron-rich foods like spinach, lentils, and red meat. Consult for iron supplements.',
+            'low': 'Increase iron-rich foods like spinach and lentils. Consult for iron supplements.',
             'high': 'Stay well-hydrated. Consult a doctor to rule out underlying conditions.'
         }
     },
-    'RBC': {
-        'aliases': ['RBC', 'Red Blood Cell', 'Erythrocytes'],
-        'min': 4.5, 'max': 5.9, 'unit': 'million/mcL',
-        'risks': {'low': 'Possible Anemia or nutritional deficiency', 'high': 'Possible dehydration or bone marrow disorder'},
+    'RBC Count': {
+        'aliases': ['RBC', 'Red Blood Cell', 'Erythrocyte Count'],
+        'min': 4.5, 'max': 5.5, 'unit': 'mill/cumm',
+        'risks': {'low': 'May indicate Anemia or nutritional deficiency', 'high': 'Possible dehydration or bone marrow disorder'},
         'suggestions': {
             'low': 'Ensure adequate intake of Vitamin B12 and Folic acid.',
             'high': 'Increase water intake and avoid tobacco products.'
         }
     },
-    'WBC': {
-        'aliases': ['WBC', 'White Blood Cell', 'Leukocytes'],
-        'min': 4500, 'max': 11000, 'unit': 'cells/mcL',
-        'risks': {'low': 'Weakened immune system', 'high': 'Infection or inflammation risk'},
+    'WBC Count': {
+        'aliases': ['WBC', 'White Blood Cell', 'Leukocyte Count', 'Total WBC'],
+        'min': 4000, 'max': 11000, 'unit': 'cells/cumm',
+        'risks': {'low': 'Possible weakened immune system', 'high': 'Possible infection or inflammation'},
         'suggestions': {
             'low': 'Focus on immune-boosting foods and maintain good hygiene.',
             'high': 'Rest and monitor for fever. Consult if symptoms persist.'
         }
     },
     'Platelet count': {
-        'aliases': ['Platelets', 'Platelet count', 'PLT'],
-        'min': 150000, 'max': 450000, 'unit': 'mcL',
-        'risks': {'low': 'Risk of bleeding/easy bruising', 'high': 'Risk of blood clots'},
+        'aliases': ['Platelets', 'Platelet count', 'PLT', 'Thrombocytes'],
+        'min': 150000, 'max': 450000, 'unit': 'cells/cumm',
+        'risks': {'low': 'Possible risk of easy bruising/bleeding', 'high': 'Possible risk of blood clots'},
         'suggestions': {
             'low': 'Avoid activities with high injury risk. Avoid blood-thinning meds like aspirin unless prescribed.',
             'high': 'Maintain an active lifestyle and stay hydrated to improve circulation.'
         }
     },
+    'PCV': {
+        'aliases': ['PCV', 'Hematocrit', 'HCT'],
+        'min': 40, 'max': 50, 'unit': '%',
+        'risks': {'low': 'May indicate Anemia', 'high': 'May indicate Dehydration'},
+        'suggestions': {
+            'low': 'Consult for iron level check and balanced diet.',
+            'high': 'Drink plenty of fluids.'
+        }
+    },
+    'MCV': {
+        'aliases': ['MCV', 'Mean Corpuscular Volume'],
+        'min': 80, 'max': 100, 'unit': 'fL',
+        'risks': {'low': 'May indicate Microcytic Anemia', 'high': 'May indicate Macrocytic Anemia'},
+        'suggestions': {
+            'low': 'Often associated with iron deficiency.',
+            'high': 'Often associated with Vitamin B12 or folate deficiency.'
+        }
+    },
+    'MCH': {
+        'aliases': ['MCH', 'Mean Corpuscular Hemoglobin'],
+        'min': 27, 'max': 32, 'unit': 'pg',
+        'risks': {'low': 'May indicate Iron deficiency', 'high': 'Possible nutritional issues'},
+        'suggestions': {
+            'low': 'Consider iron-rich diet.',
+            'high': 'Check B12/Folate levels.'
+        }
+    },
+    'MCHC': {
+        'aliases': ['MCHC', 'Mean Corpuscular Hb Conc'],
+        'min': 32, 'max': 36, 'unit': 'g/dL',
+        'risks': {'low': 'May indicate Iron deficiency', 'high': 'Possible Hereditary Spherocytosis'},
+        'suggestions': {
+            'low': 'Increase dietary iron intake.',
+            'high': 'Consult a doctor for further evaluation.'
+        }
+    },
+    'RDW': {
+        'aliases': ['RDW', 'Red Cell Distribution Width', 'RDW-CV'],
+        'min': 11.5, 'max': 14.5, 'unit': '%',
+        'risks': {'low': 'No clinical significance', 'high': 'May indicate nutritional deficiencies'},
+        'suggestions': {
+            'low': 'Normal finding.',
+            'high': 'Possible variation in red cell sizes, consult for deficiency check.'
+        }
+    },
+    'Neutrophils': {
+        'aliases': ['Neutrophils', 'Polymorphs'],
+        'min': 40, 'max': 80, 'unit': '%',
+        'risks': {'low': 'Risk of infection', 'high': 'Possible acute infection'},
+        'suggestions': {
+            'low': 'Avoid exposure to sick individuals.',
+            'high': 'Consult doctor if fever or pain occurs.'
+        }
+    },
+    'Lymphocytes': {
+        'aliases': ['Lymphocytes'],
+        'min': 20, 'max': 40, 'unit': '%',
+        'risks': {'low': 'Possible immune deficiency', 'high': 'Possible viral infection'},
+        'suggestions': {
+            'low': 'Consult for immune health.',
+            'high': 'Rest and allow the body to recover from infection.'
+        }
+    },
+    'Eosinophils': {
+        'aliases': ['Eosinophils'],
+        'min': 1, 'max': 6, 'unit': '%',
+        'risks': {'low': 'Usually normal', 'high': 'Possible allergy or parasitic infection'},
+        'suggestions': {
+            'low': 'Normal finding.',
+            'high': 'Consult for possible allergy testing.'
+        }
+    },
+    'Monocytes': {
+        'aliases': ['Monocytes'],
+        'min': 2, 'max': 10, 'unit': '%',
+        'risks': {'low': 'Usually normal', 'high': 'Possible chronic infection'},
+        'suggestions': {
+            'low': 'Normal finding.',
+            'high': 'Consult for further blood investigation.'
+        }
+    },
+    'Basophils': {
+        'aliases': ['Basophils'],
+        'min': 0, 'max': 2, 'unit': '%',
+        'risks': {'low': 'Normal', 'high': 'Possible inflammatory condition'},
+        'suggestions': {
+            'low': 'Normal finding.',
+            'high': 'Discuss with doctor if persistent.'
+        }
+    },
     'Fasting Glucose': {
-        'aliases': ['Fasting Glucose', 'Blood Sugar', 'Glucose', 'FBS'],
+        'aliases': ['Glucose', 'Blood Sugar', 'FBS', 'Sugar Fasting'],
         'min': 70, 'max': 100, 'unit': 'mg/dL',
-        'risks': {'low': 'Hypoglycemia risk', 'high': 'Diabetes/Prediabetes risk'},
+        'risks': {'low': 'Hypoglycemia risk', 'high': 'May indicate Prediabetes/Diabetes'},
         'suggestions': {
-            'low': 'Carry a source of fast-acting sugar. Eat regular, balanced meals.',
-            'high': 'Reduce sugar and refined carb intake. Increase physical activity.'
-        }
-    },
-    'Total Cholesterol': {
-        'aliases': ['Cholesterol', 'Total Cholesterol', 'TC'],
-        'min': 0, 'max': 200, 'unit': 'mg/dL',
-        'risks': {'low': 'Usually not a concern', 'high': 'Heart Disease Risk'},
-        'suggestions': {
-            'low': 'Maintain a balanced diet with healthy fats.',
-            'high': 'Limit saturated fats. Increase fiber intake from vegetables and oats.'
-        }
-    },
-    'Triglycerides': {
-        'aliases': ['Triglycerides', 'TG', 'TRIG'],
-        'min': 0, 'max': 150, 'unit': 'mg/dL',
-        'risks': {'low': 'Usually not a concern', 'high': 'Metabolic Risk/Heart health'},
-        'suggestions': {
-            'low': 'Ensure adequate calorie and healthy fat intake.',
-            'high': 'Limit alcohol and sugar. Engage in regular aerobic exercise.'
-        }
-    },
-    'Creatinine': {
-        'aliases': ['Creatinine', 'CRE', 'CREA'],
-        'min': 0.7, 'max': 1.3, 'unit': 'mg/dL',
-        'risks': {'low': 'Low muscle mass/malnutrition', 'high': 'Kidney Function Risk'},
-        'suggestions': {
-            'low': 'Ensure adequate protein intake and muscle-strengthening exercise.',
-            'high': 'Limit high-protein intake and stay well-hydrated. Discuss kidney health with a doctor.'
+            'low': 'Carry a fast-acting sugar source.',
+            'high': 'Reduce refined carbs and stay active.'
         }
     }
 }
@@ -160,39 +223,53 @@ def analyze_blood_text(text):
     has_abnormal = False
     
     import re
-    # Clean text for better matching (remove multiple spaces/newlines)
-    clean_text = re.sub(r'\s+', ' ', text)
+    # Line-by-line parsing for robustness
+    lines = text.split('\n')
     
-    # Rule-based extraction for all defined parameters
     for param, ref in BLOOD_PARAMETERS.items():
-        # Try primary name and all aliases
         found_val = None
         for alias in ref.get('aliases', [param]):
-            # More flexible regex pattern:
-            # 1. Alias (case-insensitive)
-            # 2. Optional non-alphanumeric separators (spaces, colons, dashes, etc.)
-            # 3. Numeric value (handles decimals with . or ,)
-            # 4. Optional unit (ignored for extraction)
-            escaped_alias = re.escape(alias).replace('\\ ', '\\s*')
-            pattern = fr"{escaped_alias}\s*[^0-9\n]*?\s*(\d+[\.,]?\d*)"
+            alias_pattern = re.escape(alias).replace('\\ ', '\\s*')
             
-            # Find all matches and take the most likely one (often the first or one with units nearby)
-            # In clinical reports, the first occurrence is usually the result
-            match = re.search(pattern, clean_text, re.IGNORECASE)
-            
-            if match:
-                val_str = match.group(1).replace(',', '.')
-                try:
-                    found_val = float(val_str)
-                    break # Stop if we found a valid number for this parameter
-                except ValueError:
-                    continue
+            # Look for alias in each line
+            for line in lines:
+                if re.search(fr"\b{alias_pattern}\b", line, re.IGNORECASE):
+                    # Look for the first valid numeric value in the same line after the alias
+                    # This pattern matches numbers with optional decimals and handles commas/dots
+                    val_matches = re.findall(r'(\d+[\.,]?\d*)', line)
+                    
+                    # We usually want the number that follows the alias
+                    # But if the line contains multiple numbers (like reference range), we need careful picking
+                    # Typically: [Value] [Units] [Ref Range]
+                    # Strategy: Find index of alias, look for numbers after it
+                    alias_match = re.search(fr"\b{alias_pattern}\b", line, re.IGNORECASE)
+                    text_after_alias = line[alias_match.end():]
+                    
+                    # Also look for values specifically with common blood unit prefixes
+                    numeric_after = re.search(r'(\d+[\.,]?\d*)', text_after_alias)
+                    
+                    if numeric_after:
+                        val_str = numeric_after.group(1).replace(',', '.')
+                        try:
+                            # Basic validation: CBC values are rarely > 1,000,000 or < 0
+                            # Except Platelets (150,000+) and WBC (4,000+)
+                            candidate_val = float(val_str)
+                            
+                            # Simple logic to filter out reference range values if they appear together
+                            # If the number is identical to our min or max ref, it might be the range
+                            # But if it's the only number, we take it.
+                            found_val = candidate_val
+                            break # Found for this alias
+                        except ValueError:
+                            continue
+                if found_val is not None: break
+            if found_val is not None: break
         
         if found_val is not None:
             val = found_val
             status = "Normal"
             risk = "N/A"
-            suggestion = "Keep up your healthy lifestyle."
+            suggestion = "Your levels are within the normal range."
             
             if val < ref['min']:
                 status = "Low"
