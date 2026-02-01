@@ -94,33 +94,39 @@
     </div>
 
     <div class="side-column">
+        {% if reports %}
         <div class="card">
             <h2>Recent Reports</h2>
-            {% if reports %}
-                <div class="report-list">
-                    {% for report in reports %}
-                    <div class="report-item" style="border-bottom: 1px solid #e2e8f0; padding: 1rem 0;">
-                        <div class="report-meta">
-                            <div style="display: flex; justify-content: space-between; align-items: start;">
-                                <strong>{{ report.filename }}</strong>
-                                <span class="tertiary-text" style="font-size: 0.8rem;">{{ report.created_at.strftime('%Y-%m-%d') }}</span>
-                            </div>
-                            {% set analysis_data = report.analysis_json | from_json %}
-                            {% if analysis_data and analysis_data.summary %}
-                                <div style="margin-top: 0.5rem; font-size: 0.85rem;">
-                                    <span class="text-{{ 'danger' if analysis_data.summary.abnormal_count > 0 else 'success' }}">
-                                        {{ analysis_data.summary.abnormal_count }} abnormal found
-                                    </span>
-                                </div>
-                            {% endif %}
+            <div class="report-list">
+                {% for report in reports %}
+                <div class="report-item" style="border-bottom: 1px solid #e2e8f0; padding: 1rem 0;">
+                    <div class="report-meta">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <strong>{{ report.filename }}</strong>
+                            <span class="tertiary-text" style="font-size: 0.8rem;">{{ report.created_at.strftime('%Y-%m-%d') }}</span>
                         </div>
+                        {% set analysis_data = report.analysis_json | from_json %}
+                        {% if analysis_data and analysis_data.summary %}
+                            <div style="margin-top: 0.5rem; font-size: 0.85rem;">
+                                <span class="text-{{ 'danger' if analysis_data.summary.abnormal_count > 0 else 'success' }}">
+                                    {{ analysis_data.summary.abnormal_count }} abnormal found
+                                </span>
+                            </div>
+                        {% endif %}
                     </div>
-                    {% endfor %}
                 </div>
-            {% else %}
-                <p class="empty-state">No reports uploaded yet.</p>
-            {% endif %}
+                {% endfor %}
+            </div>
         </div>
+        {% else %}
+        <div class="card empty-reports-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2.5rem 1.5rem; background: #f8fafc; border: 1px dashed #cbd5e1;">
+            <div style="background: #f1f5f9; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            </div>
+            <h3 style="margin: 0; color: #475569; font-size: 1.1rem;">No reports yet</h3>
+            <p class="tertiary-text" style="margin-top: 0.5rem; max-width: 200px;">Upload a report to get started with your analysis.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
