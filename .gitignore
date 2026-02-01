@@ -4,3 +4,22 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Replit internal files
+.local/
+.replit
+.replit_integration_files/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Database & uploads
+instance/
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
