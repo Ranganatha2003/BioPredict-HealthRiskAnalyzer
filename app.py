@@ -293,7 +293,23 @@ def analyze_blood_text(text):
                 'suggestion': suggestion
             })
     
-    return {'data': results, 'has_abnormal': has_abnormal}
+    # Calculate Overall Summary
+    abnormal_count = 0
+    detected_risks = []
+    for r in results:
+        if r['status'] != 'Normal':
+            abnormal_count += 1
+            if r['risk'] != 'N/A' and r['risk'] not in detected_risks:
+                detected_risks.append(r['risk'])
+    
+    summary = {
+        'total_parameters': len(results),
+        'abnormal_count': abnormal_count,
+        'risks': detected_risks,
+        'overall_status': "Attention Required" if abnormal_count > 0 else "Good"
+    }
+    
+    return {'data': results, 'has_abnormal': has_abnormal, 'summary': summary}
 
 # --- OpenAI Helper ---
 def get_ai_advice(prediction_data, user_query=None):
@@ -380,6 +396,13 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@app.template_filter('from_json')
+def from_json_filter(s):
+    try:
+        return json.loads(s)
+    except:
+        return None
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():

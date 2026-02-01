@@ -22,6 +22,34 @@
         <div class="analysis-results" style="margin-top: 2rem;">
             <h3>Blood Analysis Report</h3>
             
+            {% if analysis.summary %}
+            <div class="overall-summary card" style="background: #f1f5f9; border: 1px solid #cbd5e1; margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="margin: 0;">Overall Health Summary</h4>
+                    <span class="badge badge-{{ 'danger' if analysis.summary.abnormal_count > 0 else 'success' }}">
+                        {{ analysis.summary.overall_status }}
+                    </span>
+                </div>
+                <div class="summary-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <div class="stat-item">
+                        <span class="label">Abnormal Parameters:</span>
+                        <span class="value" style="color: {{ '#ef4444' if analysis.summary.abnormal_count > 0 else '#10b981' }}">{{ analysis.summary.abnormal_count }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Possible Risks:</span>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                            {% for risk in analysis.summary.risks %}
+                                <li class="text-danger">{{ risk }}</li>
+                            {% else %}
+                                <li class="text-success">No significant risks detected</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <p class="tertiary-text" style="margin-top: 1rem; font-style: italic;">Note: This analysis may indicate potential concerns based on standard ranges but is not a clinical diagnosis.</p>
+            </div>
+            {% endif %}
+
             <div class="results-grid">
                 {% for item in analysis.data %}
                 <div class="result-card status-{{ item.status | lower }}">
@@ -71,10 +99,20 @@
             {% if reports %}
                 <div class="report-list">
                     {% for report in reports %}
-                    <div class="report-item">
+                    <div class="report-item" style="border-bottom: 1px solid #e2e8f0; padding: 1rem 0;">
                         <div class="report-meta">
-                            <strong>{{ report.filename }}</strong>
-                            <span class="tertiary-text">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <strong>{{ report.filename }}</strong>
+                                <span class="tertiary-text" style="font-size: 0.8rem;">{{ report.created_at.strftime('%Y-%m-%d') }}</span>
+                            </div>
+                            {% set analysis_data = report.analysis_json | from_json %}
+                            {% if analysis_data and analysis_data.summary %}
+                                <div style="margin-top: 0.5rem; font-size: 0.85rem;">
+                                    <span class="text-{{ 'danger' if analysis_data.summary.abnormal_count > 0 else 'success' }}">
+                                        {{ analysis_data.summary.abnormal_count }} abnormal found
+                                    </span>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
