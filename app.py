@@ -243,25 +243,26 @@ def analyze_blood_text(text):
                     # Typically: [Value] [Units] [Ref Range]
                     # Strategy: Find index of alias, look for numbers after it
                     alias_match = re.search(fr"\b{alias_pattern}\b", line, re.IGNORECASE)
-                    text_after_alias = line[alias_match.end():]
-                    
-                    # Also look for values specifically with common blood unit prefixes
-                    numeric_after = re.search(r'(\d+[\.,]?\d*)', text_after_alias)
-                    
-                    if numeric_after:
-                        val_str = numeric_after.group(1).replace(',', '.')
-                        try:
-                            # Basic validation: CBC values are rarely > 1,000,000 or < 0
-                            # Except Platelets (150,000+) and WBC (4,000+)
-                            candidate_val = float(val_str)
-                            
-                            # Simple logic to filter out reference range values if they appear together
-                            # If the number is identical to our min or max ref, it might be the range
-                            # But if it's the only number, we take it.
-                            found_val = candidate_val
-                            break # Found for this alias
-                        except ValueError:
-                            continue
+                    if alias_match:
+                        text_after_alias = line[alias_match.end():]
+                        
+                        # Also look for values specifically with common blood unit prefixes
+                        numeric_after = re.search(r'(\d+[\.,]?\d*)', text_after_alias)
+                        
+                        if numeric_after:
+                            val_str = numeric_after.group(1).replace(',', '.')
+                            try:
+                                # Basic validation: CBC values are rarely > 1,000,000 or < 0
+                                # Except Platelets (150,000+) and WBC (4,000+)
+                                candidate_val = float(val_str)
+                                
+                                # Simple logic to filter out reference range values if they appear together
+                                # If the number is identical to our min or max ref, it might be the range
+                                # But if it's the only number, we take it.
+                                found_val = candidate_val
+                                break # Found for this alias
+                            except ValueError:
+                                continue
                 if found_val is not None: break
             if found_val is not None: break
         
